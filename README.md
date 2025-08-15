@@ -1,5 +1,7 @@
 # Document Translator
 
+<img src=homepage.png>
+
 ## Installation
 
 ### 1. Clone the repo 
