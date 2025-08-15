@@ -30,7 +30,7 @@ node index.js
 ### 5. Open another terminal and start React
 
 ```bash
-cd cd Document-Translator/client
+cd Document-Translator/client
 npm run dev
 ```
 
