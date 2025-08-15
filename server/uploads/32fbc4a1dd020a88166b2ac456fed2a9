@@ -1,5 +1,0 @@
-if (!localStorage.getItem('visited')){
-	localStorage.setItem('0', 'false');
-	localStorage.setItem('1', 'false');
-	localStorage.setItem('visited', 'true');
-}

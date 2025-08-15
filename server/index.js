@@ -10,11 +10,26 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-const upload = multer({ dest: 'uploads/' }); // files will be saved to uploads/
+const upload = multer({ dest: 'uploads/' });
+
+const uploadedFiles = [];
+
+function cleanupUploads() {
+  uploadedFiles.forEach(filePath => {
+    fs.unlink(filePath, err => {
+      if (err) {
+        console.error(`Failed to delete ${filePath}:`, err);
+      } else {
+        console.log(`Deleted: ${filePath}`);
+      }
+    });
+  });
+}
 
 app.post('/upload', upload.single('filename'), async (req, res) => {
-  console.log(req.file); // contains file info
+  console.log(req.file);
   const fn = req.file.path;
+  uploadedFiles.push(fn);
   fs.readFile(fn, 'utf8', (err, data) => {
     if (err) {
       console.error('Read error:', err);
@@ -48,8 +63,6 @@ app.post('/trans', async (req, res) => {
     );
 
     const translatedText = response.data.translations[0].text;
-    //console.log("Translated Text:", response.data);
-    //console.log("TARGETED: ", params.get("target_lang"));
     res.json({ translatedText });
   } catch (error) {
     console.error('Translation error:', error.response?.data || error.message);
@@ -59,4 +72,10 @@ app.post('/trans', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
+});
+
+process.on('SIGINT', () => {
+  console.log('\nShutting down server...');
+  cleanupUploads();
+  process.exit();
 });
