@@ -5,11 +5,15 @@ import './App.css'
 
 
 function Home() {
-  const [showSubmit, setShowSubmit] = useState(false)
-  const [file, setFile] = useState(null);
+  const [showSubmit, setShowSubmit] = useState(false) // Indicator variable for submit button
+  const [file, setFile] = useState(null); // Indicator variable for file
 
   const navigate = useNavigate();
 
+  /*
+   * Handles user file upload.
+   * Sends the file to Node server to handle translation.
+   */
   const handleUpload = async (e) => {
     e.preventDefault();
 
@@ -30,11 +34,15 @@ function Home() {
 
     navigate('/uploaded', { state: { content: result.content } });
   };
-
+  
+  /*
+   * Handles whether to show 'Upload' or 'Submit'.
+   * Depends on if user has uploaded a file.
+   */
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
-    console.log("Selected file:", selectedFile);  // <--- add this
-    localStorage.setItem('filename', selectedFile.name);
+    console.log("Selected file:", selectedFile);
+    localStorage.setItem('filename', selectedFile.name); // Store filename in local storage for future use
     if (selectedFile) {
         setFile(selectedFile);
         setShowSubmit(true);
