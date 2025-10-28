@@ -77,7 +77,7 @@ function Home() {
       <input type="file" id="myFile" name="filename" style={{ display: 'none' }} onChange={handleFileChange}></input>
       </div>
       <p className="read-the-docs">
-        Translate any .txt file with ReadMe
+        Translate any .txt or .pdf file with ReadMe
       </p>
     </>
   )
