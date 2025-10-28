@@ -17,6 +17,21 @@ function Uploaded() {
    * DeepL API handles the translation.
    * Waits for translation and then displays it.
    */
+  const handlePdf = async () => {
+    const response = await fetch('http://localhost:3000/pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: content,
+        source: sourceLang,
+        target: targetLang
+      }),
+    });
+  }
+
+
   const handleTranslate = async () => {
     const response = await fetch('http://localhost:3000/trans', {
       method: 'POST',

@@ -1,8 +1,9 @@
-const express = require('express');
-const multer = require('multer');
-const cors = require('cors');
-const fs = require('fs');
-const axios = require('axios');
+import express from "express";
+import multer from "multer";
+import cors from "cors";
+import fs from "fs";
+import axios from "axios";
+import pdf from "pdf-parse";
 
 const app = express();
 const port = 3000;
@@ -34,16 +35,32 @@ function cleanupUploads() {
 /*
  * Store the content of files uploaded by the userS.
  */
-app.post('/upload', upload.single('filename'), async (req, res) => {
+app.post('/upload', upload.single('filename'), function (req, res){
   console.log(req.file);
   const fn = req.file.path;
   uploadedFiles.push(fn);
-  fs.readFile(fn, 'utf8', (err, data) => {
+  fs.readFile(fn, 'utf8', function (err, data) {
     if (err) {
       console.error('Read error:', err);
       return res.status(500).json({ error: 'Failed to read file' });
     }
     res.json({ content: data }); // Return the file content
+  });
+});
+
+app.post('/upload/pdf', upload.single('filename'), function(req, res) {
+  const fn = req.file.path;
+  uploadedFiles.push(fn);
+  fs.readFile(fn, 'utf8', function (err, data) {
+    if (err) {
+      console.error('Read error:', err);
+      return res.status(500).json({ error: 'Failed to read file' });
+    }
+    const dataBuffer = fs.readFileSync(req.body);
+    pdf(dataBuffer).then(function (text) {
+      return res.json({ content: text });
+    });
+    return res.status(500).json({ error: 'Failed to transcribe file' });
   });
 });
 

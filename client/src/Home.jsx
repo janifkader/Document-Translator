@@ -21,17 +21,22 @@ function Home() {
         console.error("No file selected");
         return;
     }
-
+    let response;
     const formData = new FormData();
     formData.append('filename', file);
-
-    const response = await fetch('http://localhost:3000/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
+    if (file.name.includes(".txt")) {
+      response = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        body: formData,
+      });
+    }
+    else if (file.name.includes(".pdf")) {
+      response = await fetch('http://localhost:3000/upload/pdf', {
+        method: 'POST',
+        body: formData,
+      });
+    }
     const result = await response.json();
-
     navigate('/uploaded', { state: { content: result.content } });
   };
   
