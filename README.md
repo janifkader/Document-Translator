@@ -26,7 +26,7 @@ npm install
 ### 4. Start Node Server 
 
 ```bash
-node index.js
+node index.mjs
 ```
 
 ### 5. Open another terminal and start React
