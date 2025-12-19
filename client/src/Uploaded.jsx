@@ -74,7 +74,7 @@ function Uploaded() {
   return (
       <>
         <div>
-          <a href="http://localhost:5173">
+          <a href="/">
             <img src={logo} className="logo" alt="Readme logo" />
           </a>
         </div>
