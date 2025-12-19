@@ -4,6 +4,7 @@ import cors from "cors";
 import fs from "fs";
 import axios from "axios";
 import { PDFParse } from "pdf-parse";
+import { body, check, validationResult }  from "express-validator";
 
 const app = express();
 const port = 3000;
@@ -13,11 +14,53 @@ app.use(express.json());
 
 const upload = multer({ dest: 'uploads/' });
 
+const isValid = function (req, res, next) {
+  const result = validationResult(req);
+  if (!result.isEmpty()) {
+    if (req.file) {
+      unlink(req.file.path, (err) => {
+        if (err){ 
+          console.error("Could not remove file", err);
+        }
+      });
+    }
+    return res.status(400).json({ errors: result.array() });
+  }
+  next();
+}
+
+const validFile = [
+  check("file").custom(function (value, { req }) {
+    if (!req.file){
+      throw new Error("File is required");
+    }
+    if (!req.file.mimetype.includes("pdf") && !req.file.mimetype.includes("text") ){
+      throw new Error("Only txt and pdf files allowed");
+    }
+    return true;
+  }),
+];
+
+const validText = [
+  body("text")
+    .exists()
+    .matches(/^[A-Za-z0-9 _.,?!-]+$/)
+    .trim().escape(),
+  body("source")
+    .exists()
+    .matches(/^[A-Za-z0-9 _.,?!-]+$/)
+    .trim().escape(),
+  body("target")
+    .exists()
+    .matches(/^[A-Za-z0-9 _.,?!-]+$/)
+    .trim().escape(),
+];
+
 
 /*
  * Store the content of files uploaded by the userS.
  */
-app.post('/upload', upload.single('filename'), function (req, res){
+app.post('/upload', upload.single('filename'), validFile, isValid, function (req, res){
   console.log(req.file);
   const fn = req.file.path;
   fs.readFile(fn, 'utf8', function (err, data) {
@@ -32,7 +75,7 @@ app.post('/upload', upload.single('filename'), function (req, res){
   });
 });
 
-app.post('/upload/pdf', upload.single('filename'), async function (req, res) {
+app.post('/upload/pdf', upload.single('filename'), validFile, isValid, async function (req, res) {
   const fn = req.file.path;
   try {
     const dataBuffer = fs.readFileSync(fn);
@@ -57,7 +100,7 @@ app.post('/upload/pdf', upload.single('filename'), async function (req, res) {
  * Embed those parameters and send them to the DeepL API to handle translation.
  * Return the translation to React.
  */
-app.post('/trans', async function (req, res) {
+app.post('/trans', validText, isValid, async function (req, res) {
   const { text, source, target } = req.body;
   if (!text || !source || !target) {
     return res.status(400).json({ error: 'Missing required fields' });
