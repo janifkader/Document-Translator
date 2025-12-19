@@ -20,7 +20,6 @@ const upload = multer({ dest: 'uploads/' });
 app.post('/upload', upload.single('filename'), function (req, res){
   console.log(req.file);
   const fn = req.file.path;
-  uploadedFiles.push(fn);
   fs.readFile(fn, 'utf8', function (err, data) {
     if (err) {
       console.error('Read error:', err);
@@ -35,14 +34,13 @@ app.post('/upload', upload.single('filename'), function (req, res){
 
 app.post('/upload/pdf', upload.single('filename'), async function (req, res) {
   const fn = req.file.path;
-  uploadedFiles.push(fn);
   try {
     const dataBuffer = fs.readFileSync(fn);
     const parser = new PDFParse({ data: dataBuffer });
-    const result = await parser.getText();
+    const result = await parser.getText({ structure: true });
     await parser.destroy();
     
-    res.json({ content: result.text });
+    res.json({ content: result.text, total: result.total, pages: result.pages });
   }
   catch (err) {
     return res.status(500).json({ error: 'Failed to transcribe file' });
