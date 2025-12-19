@@ -33,7 +33,8 @@ node index.mjs
 
 ```bash
 cd Document-Translator/client
-npm run dev
+npm run build
+npm run preview
 ```
 
 ### 6. Click the [link](http://localhost:5173) to view the site
