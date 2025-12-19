@@ -21,23 +21,30 @@ function Home() {
         console.error("No file selected");
         return;
     }
-    let response;
     const formData = new FormData();
     formData.append('filename', file);
     if (file.name.includes(".txt")) {
-      response = await fetch('http://localhost:3000/upload', {
+      const response = await fetch('http://localhost:3000/upload', {
         method: 'POST',
         body: formData,
       });
+      const result = await response.json();
+      navigate('/uploaded', { state: { filename: result.filename, content: result.content } });
     }
     else if (file.name.includes(".pdf")) {
-      response = await fetch('http://localhost:3000/upload/pdf', {
+      const response = await fetch('http://localhost:3000/upload/pdf', {
         method: 'POST',
         body: formData,
       });
+      const result = await response.json();
+      const tot = result.total;
+      if (tot < 2){
+        navigate('/uploaded', { state: { filename: result.filename, content: result.content } });
+      }
+      else{
+        navigate('/uploaded', { state: { filename: result.filename, content: result.pages[0].text, pages: result.pages } });
+      }
     }
-    const result = await response.json();
-    navigate('/uploaded', { state: { content: result.content } });
   };
   
   /*
@@ -47,7 +54,6 @@ function Home() {
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     console.log("Selected file:", selectedFile);
-    localStorage.setItem('filename', selectedFile.name); // Store filename in local storage for future use
     if (selectedFile) {
         setFile(selectedFile);
         setShowSubmit(true);

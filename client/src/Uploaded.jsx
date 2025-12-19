@@ -1,55 +1,76 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom';
 import './App.css'
+import IconButton from '@mui/material/IconButton';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import logo from '/logo2.png'
 
 function Uploaded() {
-  const [sourceLang, setSourceLang] = useState('EN'); // Variables for source language
-  const [targetLang, setTargetLang] = useState('EN-GB'); // Variables for target lanuage
+  const [sourceLang, setSourceLang] = useState('EN'); 
+  const [targetLang, setTargetLang] = useState('EN-GB'); 
+  const [page, setPage] = useState(1);
+  const [translations, setTranslations] = useState({});
   const location = useLocation();
-  const content = location.state?.content || 'No content';
-  const fn = localStorage.getItem('filename'); // Retrieve filename from local storage
-  console.log("File Content: ", content);
-  
-  /*
+  const fn = location.state?.filename || 'No filename';
+  const pages = Array.isArray(location.state?.pages) ? location.state.pages : null;
+  const initialContent = location.state?.content || 'No content';
+  const originalText = pages ? pages[page - 1].text : initialContent;
+  const textToDisplay = translations[page] || originalText;
+
+  const handleNext = function () {
+    if (pages && page < pages.length) {
+      setPage(page + 1);
+    }
+  }
+
+  const handlePrevious = function () {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  }
+
+   /*
    * Compresses the necessary info (languages, content) into JSON format.
    * Sends the JSON to the Node serverr to communicate with the API.
    * DeepL API handles the translation.
    * Waits for translation and then displays it.
    */
-  const handlePdf = async () => {
-    const response = await fetch('http://localhost:3000/pdf', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: content,
-        source: sourceLang,
-        target: targetLang
-      }),
+
+  const handleTranslate = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/trans', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: originalText, 
+          source: sourceLang,
+          target: targetLang
+        }),
+      });
+  
+      const data = await response.json();
+      console.log('Translated text:', data.translatedText);
+      setTranslations(prevTranslations => ({
+        ...prevTranslations,
+        [page]: data.translatedText 
+      }));
+      
+    } catch (error) {
+      console.error("Translation failed", error);
+    }
+  };
+  
+  const handleRevert = () => {
+    setTranslations(prev => {
+        const copy = { ...prev };
+        delete copy[page];
+        return copy;
     });
   }
 
-
-  const handleTranslate = async () => {
-    const response = await fetch('http://localhost:3000/trans', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: content,
-        source: sourceLang,
-        target: targetLang
-      }),
-    });
-  
-    const data = await response.json();
-    console.log('Translated text:', data.translatedText);
-    document.getElementsByClassName("textCont")[0].textContent = data.translatedText;
-  };
-  
   return (
       <>
         <div>
@@ -61,12 +82,25 @@ function Uploaded() {
           <h1>{fn}</h1>
         </div>
         <div>
-          <p className="textCont">{content}</p> {/* Where the file content will be displayed */}
+          <p className="textCont">{textToDisplay}</p> 
         </div>
+        
+        {pages && (
+            <div>
+              {page === pages.length && <> <IconButton size="large" onClick={handlePrevious}>
+                 <ArrowBackIcon sx={{ color: "#5073F0", fontSize: 40 }} /> 
+              </IconButton> </> }
+              {page === 1 && <> <IconButton size="large" onClick={handleNext}>
+                 <ArrowForwardIcon sx={{ color: "#5073F0", fontSize: 40 }} />
+              </IconButton> </> }
+              <p style={{ color: "#5073F0", fontSize: "large", fontWeight: "bold" }}>Page {page} of {pages.length}</p>
+            </div>
+        )}
+
         <div>
           <label className="opts">Translation Options:</label>
         </div>
-        <div> {/* Dropdown menu to select translation languages */}
+        <div> 
           <select className="drops" name="src" id="src" value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
               <option value="EN">English</option>
               <option value="FR">French</option>
@@ -82,7 +116,16 @@ function Uploaded() {
             </select>
         </div>
         <div>
-          <button className="custom-file-upload" onClick={handleTranslate}>Submit</button>
+          <button className="custom-file-upload" onClick={handleTranslate}>
+             { pages ? `Translate Page ${page}` : 'Translate' }
+          </button>
+          
+          {/* Show a "Revert" button only if this specific page is currently translated */}
+          {translations[page] && (
+             <button className="custom-file-upload" onClick={handleRevert} style={{marginLeft: '10px'}}>
+                Revert to Original
+             </button>
+          )}
         </div>
       </>
     );

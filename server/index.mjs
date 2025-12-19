@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from "express";
 import multer from "multer";
 import cors from "cors";
@@ -42,19 +43,15 @@ const validFile = [
 ];
 
 const validText = [
-  body("text")
-    .exists()
-    .matches(/^[A-Za-z0-9 _.,?!-]+$/)
-    .trim().escape(),
-  body("source")
-    .exists()
-    .matches(/^[A-Za-z0-9 _.,?!-]+$/)
-    .trim().escape(),
-  body("target")
-    .exists()
-    .matches(/^[A-Za-z0-9 _.,?!-]+$/)
-    .trim().escape(),
+  body("text").exists().trim(), 
+  body("source").exists().trim().escape(),
+  body("target").exists().trim().escape(),
 ];
+
+app.use(function (req, res, next) {
+  console.log("HTTPS request", req.method, req.url, req.body);
+  next();
+});
 
 
 /*
@@ -71,7 +68,7 @@ app.post('/upload', upload.single('filename'), validFile, isValid, function (req
     fs.unlink(fn, function (err) {
       if (err) console.warn('Cleanup failed:', err);
     });
-    res.json({ content: data }); // Return the file content
+    res.json({ filename: req.file.originalname, content: data }); // Return the file content
   });
 });
 
@@ -83,7 +80,7 @@ app.post('/upload/pdf', upload.single('filename'), validFile, isValid, async fun
     const result = await parser.getText({ structure: true });
     await parser.destroy();
     
-    res.json({ content: result.text, total: result.total, pages: result.pages });
+    res.json({ filename: req.file.originalname, content: result.text, total: result.total, pages: result.pages });
   }
   catch (err) {
     return res.status(500).json({ error: 'Failed to transcribe file' });
@@ -107,7 +104,7 @@ app.post('/trans', validText, isValid, async function (req, res) {
   }
 
   const params = new URLSearchParams(); // Embed parameters
-  params.append("auth_key", "8f3e49b2-ba9f-4f72-b461-ccdb9a397ff1:fx");
+  params.append("auth_key", process.env.API_KEY);
   params.append("text", text);
   params.append("source_lang", source);
   params.append("target_lang", target);
