@@ -37,4 +37,4 @@ npm run build
 npm run preview
 ```
 
-### 6. Click the [link](http://localhost:5173) to view the site
+### 6. Click the [link](http://localhost:4173) to view the site
