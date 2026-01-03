@@ -39,7 +39,7 @@ function Uploaded() {
 
   const handleTranslate = async () => {
     try {
-      const response = await fetch('http://localhost:3000/trans', {
+      const response = await fetch('http://localhost:3000/api/translate/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

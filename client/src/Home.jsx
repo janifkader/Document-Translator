@@ -23,21 +23,13 @@ function Home() {
     }
     const formData = new FormData();
     formData.append('filename', file);
-    if (file.name.includes(".txt")) {
-      const response = await fetch('http://localhost:3000/upload', {
+    if (file.name.includes(".txt") || file.name.includes(".pdf")) {
+      const response = await fetch('http://localhost:3000/api/documents/', {
         method: 'POST',
         body: formData,
       });
       const result = await response.json();
-      navigate('/uploaded', { state: { filename: result.filename, content: result.content } });
-    }
-    else if (file.name.includes(".pdf")) {
-      const response = await fetch('http://localhost:3000/upload/pdf', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-      const tot = result.total;
+      const tot = result.total ?? 0;
       if (tot < 2){
         navigate('/uploaded', { state: { filename: result.filename, content: result.content } });
       }

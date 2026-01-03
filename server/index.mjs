@@ -55,39 +55,38 @@ app.use(function (req, res, next) {
 
 
 /*
- * Store the content of files uploaded by the userS.
+ * Store the content of files uploaded by the user.
  */
-app.post('/upload', upload.single('filename'), validFile, isValid, function (req, res){
-  console.log(req.file);
+app.post('/api/documents/', upload.single('filename'), validFile, isValid, async function (req, res){
   const fn = req.file.path;
-  fs.readFile(fn, 'utf8', function (err, data) {
-    if (err) {
-      console.error('Read error:', err);
-      return res.status(500).json({ error: 'Failed to read file' });
+  if (req.file.mimetype.includes('pdf')) {
+    try {
+      const dataBuffer = fs.readFileSync(fn);
+      const parser = new PDFParse({ data: dataBuffer });
+      const result = await parser.getText({ structure: true });
+      await parser.destroy();
+      
+      res.json({ filename: req.file.originalname, content: result.text, total: result.total, pages: result.pages });
     }
-    fs.unlink(fn, function (err) {
-      if (err) console.warn('Cleanup failed:', err);
-    });
-    res.json({ filename: req.file.originalname, content: data }); // Return the file content
-  });
-});
-
-app.post('/upload/pdf', upload.single('filename'), validFile, isValid, async function (req, res) {
-  const fn = req.file.path;
-  try {
-    const dataBuffer = fs.readFileSync(fn);
-    const parser = new PDFParse({ data: dataBuffer });
-    const result = await parser.getText({ structure: true });
-    await parser.destroy();
-    
-    res.json({ filename: req.file.originalname, content: result.text, total: result.total, pages: result.pages });
+    catch (err) {
+      return res.status(500).json({ error: 'Failed to transcribe file' });
+    }
+    finally {
+      fs.unlink(fn, function (err) {
+        if (err) console.warn('Cleanup failed:', err);
+      });
+    }
   }
-  catch (err) {
-    return res.status(500).json({ error: 'Failed to transcribe file' });
-  }
-  finally {
-    fs.unlink(fn, function (err) {
-      if (err) console.warn('Cleanup failed:', err);
+  else {
+    fs.readFile(fn, 'utf8', function (err, data) {
+      if (err) {
+        console.error('Read error:', err);
+        return res.status(500).json({ error: 'Failed to read file' });
+      }
+      fs.unlink(fn, function (err) {
+        if (err) console.warn('Cleanup failed:', err);
+      });
+      res.json({ filename: req.file.originalname, content: data }); // Return the file content
     });
   }
 });
@@ -97,7 +96,7 @@ app.post('/upload/pdf', upload.single('filename'), validFile, isValid, async fun
  * Embed those parameters and send them to the DeepL API to handle translation.
  * Return the translation to React.
  */
-app.post('/trans', validText, isValid, async function (req, res) {
+app.post('/api/translate/', validText, isValid, async function (req, res) {
   const { text, source, target } = req.body;
   if (!text || !source || !target) {
     return res.status(400).json({ error: 'Missing required fields' });
