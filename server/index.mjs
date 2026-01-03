@@ -15,6 +15,9 @@ app.use(express.json());
 
 const upload = multer({ dest: 'uploads/' });
 
+/*
+ * Global validator function using express validator
+ */
 const isValid = function (req, res, next) {
   const result = validationResult(req);
   if (!result.isEmpty()) {
@@ -30,6 +33,9 @@ const isValid = function (req, res, next) {
   next();
 }
 
+/*
+ * Validator for file (check for right file type and proper upload).
+ */
 const validFile = [
   check("file").custom(function (value, { req }) {
     if (!req.file){
@@ -42,6 +48,9 @@ const validFile = [
   }),
 ];
 
+/*
+ * Validator for text being provided for translation (check that all bodies are present and valid). 
+ */
 const validText = [
   body("text").exists().trim(), 
   body("source").exists().trim().escape(),
@@ -56,6 +65,9 @@ app.use(function (req, res, next) {
 
 /*
  * Store the content of files uploaded by the user.
+ * Check if the file is a pdf or a txt file.
+ * If it is the former, return the filename and content as well as the page count.
+ * If it is the latter, just return the filename and content.
  */
 app.post('/api/documents/', upload.single('filename'), validFile, isValid, async function (req, res){
   const fn = req.file.path;
