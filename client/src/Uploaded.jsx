@@ -11,12 +11,12 @@ function Uploaded() {
   const [targetLang, setTargetLang] = useState('EN-GB'); 
   const [page, setPage] = useState(1);
   const [translations, setTranslations] = useState({});
+  const [showTranslation, setShowTranslation] = useState({});
   const location = useLocation();
   const fn = location.state?.filename || 'No filename';
   const pages = Array.isArray(location.state?.pages) ? location.state.pages : null;
   const initialContent = location.state?.content || 'No content';
   const originalText = pages ? pages[page - 1].text : initialContent;
-  const textToDisplay = translations[page] || originalText;
 
   const handleNext = function () {
     if (pages && page < pages.length) {
@@ -52,24 +52,27 @@ function Uploaded() {
       });
   
       const data = await response.json();
-      console.log('Translated text:', data.translatedText);
       setTranslations(prevTranslations => ({
         ...prevTranslations,
         [page]: data.translatedText 
       }));
+      setShowTranslation(prev => ({
+      ...prev,
+      [page]: true
+    }));
       
-    } catch (error) {
+    } 
+    catch (error) {
       console.error("Translation failed", error);
     }
   };
   
-  const handleRevert = () => {
-    setTranslations(prev => {
-        const copy = { ...prev };
-        delete copy[page];
-        return copy;
-    });
-  }
+  const handleToggle = () => {
+    setShowTranslation(prev => ({
+        ...prev,
+        [page]: !prev[page] // Flips true to false, or false to true
+    }));
+  };
 
   return (
       <>
@@ -82,7 +85,9 @@ function Uploaded() {
           <h1>{fn}</h1>
         </div>
         <div>
-          <p className="textCont">{textToDisplay}</p> 
+          <p className="textCont">
+            { (translations[page] && showTranslation[page]) ? translations[page] : originalText }
+          </p> 
         </div>
         
         {pages && (
@@ -105,6 +110,10 @@ function Uploaded() {
               <option value="EN">English</option>
               <option value="FR">French</option>
               <option value="ES">Spanish</option>
+              <option value="DE">German</option>
+              <option value="IT">Italian</option>
+              <option value="NL">Dutch</option>
+              <option value="PL">Polish</option>
               <option value="JA">Japanese</option>
             </select>
             <label className="opts"> → </label>
@@ -112,6 +121,10 @@ function Uploaded() {
               <option value="EN-GB">English</option>
               <option value="FR">French</option>
               <option value="ES">Spanish</option>
+              <option value="DE">German</option>
+              <option value="IT">Italian</option>
+              <option value="NL">Dutch</option>
+              <option value="PL">Polish</option>
               <option value="JA">Japanese</option>
             </select>
         </div>
@@ -119,12 +132,11 @@ function Uploaded() {
           <button className="custom-file-upload" onClick={handleTranslate}>
              { pages ? `Translate Page ${page}` : 'Translate' }
           </button>
-          
           {/* Show a "Revert" button only if this specific page is currently translated */}
           {translations[page] && (
-             <button className="custom-file-upload" onClick={handleRevert} style={{marginLeft: '10px'}}>
-                Revert to Original
-             </button>
+              <button className="custom-file-upload" onClick={handleToggle}>
+                { (showTranslation[page]) ? "See Original" : "See Translation" }
+              </button>
           )}
         </div>
       </>
